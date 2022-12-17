@@ -7,6 +7,8 @@ from rest_framework import serializers, status, generics, permissions
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+
+from Helpers import role_is_authorized
 from Student.models import Student
 from Student.serializers import StudentSerializer, UserSerializer, RegisterSerializer
 
@@ -30,11 +32,12 @@ def add_student(request):
 @login_required()
 def get_students(request):
     students = Student.objects.all()
-
     if students is None:
         return Response(status=status.HTTP_404_NOT_FOUND)
+    if role_is_authorized(request, "student"):
+        return Response("you are not allowed to make this request", status=status.HTTP_403_FORBIDDEN)
     else:
-        print(request.user)
+        print(request.user.is_superuser)
         serialized_student = StudentSerializer(students, many=True)
         return Response(serialized_student.data, status=status.HTTP_200_OK)
 
