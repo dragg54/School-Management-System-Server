@@ -1,6 +1,5 @@
 from django.urls import path, include
 from . import views as student_view
-from .views import LoginAPI
 from knox import views as knox_views
 
 urlpatterns = [

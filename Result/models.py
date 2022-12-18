@@ -1,13 +1,6 @@
 from django.contrib.auth.models import User
 from django.db import models
 from Courses.models import Courses
-from Student.models import Student
-
-
-def get_course_name(id):
-    course = Courses.objects.get(id)
-    return course.course_title
-
 
 class Result(models.Model):
     course_id = models.ForeignKey(Courses, on_delete=models.CASCADE)

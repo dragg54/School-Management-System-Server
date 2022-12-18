@@ -14,7 +14,8 @@ def add_result(request):
     result = ResultSerializer(data=request.data)
     if Result.objects.filter(**request.data).exists():
         raise serializers.ValidationError("result already exists")
-    if not role_is_authorized(request, user_role):
+    user_role = "teacher"
+    if not role_is_authorized(request, user_role) or request.user.is_superuser:
         return Response("you are not authorized to make this request", status=status.HTTP_401_UNAUTHORIZED)
     if result.is_valid():
         result.save()
@@ -25,12 +26,47 @@ def add_result(request):
 @api_view(["GET"])
 def get_results(request):
     user_role = "teacher"
-    if not role_is_authorized(request, user_role):
+    if not role_is_authorized(request, user_role) and not request.user.is_superuser:
         return Response("you are not authorized to make this request", status=status.HTTP_401_UNAUTHORIZED)
     results = Result.objects.all()
     if results is not None:
         serialized_result = ResultSerializer(results, many=True)
         return Response(serialized_result.data, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def get_result(request, student_id):
+    result = Result.objects.filter(student_id=student_id)
+    print(result)
+    if result is not None:
+        serialized_result = ResultSerializer(result, many=True)
+        return Response(serialized_result.data, status=status.HTTP_200_OK)
+    else:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(["DELETE"])
+def delete_result(request, student_id, result_id):
+    result = Result.objects.get(result_id=result_id).get(student_id=student_id)
+    if result is not None:
+        result.delete()
+        return Response("result belonging to " + " " + str(student_id) + " deleted", status=status.HTTP_200_OK)
+
+    else:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(["PUT"])
+def update_result(request, student_id, result_id):
+    result = Result.objects.get(result_id=result_id).get(student_id=student_id)
+    if result is not None:
+        serialized_result = ResultSerializer(instance=result, data=request.data)
+        if serialized_result.is_valid():
+            serialized_result.save()
+            return Response(status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+    return Response(status=status.HTTP_404_NOT_FOUND)
 
 
 @api_view(["GET"])
