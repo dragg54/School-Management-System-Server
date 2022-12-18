@@ -33,7 +33,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'Role.apps.RoleConfig',
-    #'Teacher.apps.TeacherConfig',
+    'Teacher.apps.TeacherConfig',
     'Student.apps.StudentConfig',
     'Result.apps.ResultConfig',
     'Courses.apps.CoursesConfig',
