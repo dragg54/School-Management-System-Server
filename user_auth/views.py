@@ -1,5 +1,6 @@
 from django.contrib.auth import login
 from django.contrib.auth.models import User
+from knox.auth import TokenAuthentication
 from knox.views import LoginView as KnoxLoginView
 from django.shortcuts import render
 from knox.models import AuthToken
@@ -38,12 +39,14 @@ class LoginAPI(KnoxLoginView):
 
 @api_view(["GET"])
 def get_current_user(request):
-    current_user_id = request.user.id
-    _current_user_id = AuthToken.objects.filter(user=current_user_id)[:1]
-    for user in _current_user_id:
-        user_data = User.objects.get(username = user.user)
-        serialized_user_data = UserSerializer(user_data)
-        return Response(serialized_user_data.data, status=status.HTTP_200_OK)
+    token = request.META.get('HTTP_AUTHORIZATION', False)
+    if token:
+        token = str(token).split()[1].encode("utf-8")
+        knoxAuth = TokenAuthentication()
+        user, auth_token = knoxAuth.authenticate_credentials(token)
+        request.user = user
+        serialized_user = UserSerializer(request.user)
+        return Response(serialized_user.data, status=status.HTTP_200_OK)
 
 
 class RegisterAPI(generics.GenericAPIView):
