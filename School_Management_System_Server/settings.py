@@ -25,7 +25,6 @@ SECRET_KEY = 'django-insecure-g$j#v-(h-p_$=bl-ftks&y8^hrc*8r+gv=v!68%$!60_#o&cb$
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-
 # Application definition
 
 INSTALLED_APPS = [

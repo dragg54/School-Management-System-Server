@@ -1,11 +1,19 @@
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from knox.auth import TokenAuthentication
+from knox.models import AuthToken
+from knox.serializers import UserSerializer
 from rest_framework import serializers, status, generics, permissions
+from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from knox.views import LoginView as KnoxLoginView
+
 
 from Helpers import role_is_authorized
 from Student.models import Student
-from Student.serializers import StudentSerializer
+from Student.serializers import StudentSerializer, RegisterSerializer
 
 
 @api_view(["POST"])
@@ -70,3 +78,69 @@ def update_student(request, student_id):
             return Response(status=status.HTTP_400_BAD_REQUEST)
     return Response(status=status.HTTP_404_NOT_FOUND)
 
+
+class RegisterAPI(generics.GenericAPIView):
+    serializer_class = RegisterSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if User.objects.filter(**request.data).exists():
+            raise serializers.ValidationError('Student already exists')
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response({
+            "user": UserSerializer(user, context=self.get_serializer_context()).data,
+            "token": AuthToken.objects.create(user)[1]
+        })
+
+
+class LoginAPI(KnoxLoginView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request, format=None):
+        serializer = AuthTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        login(request, user)
+        return super(LoginAPI, self).post(request, format=None)
+
+
+@api_view(["GET"])
+def get_current_user(request):
+    token = request.META.get('HTTP_AUTHORIZATION', False)
+    if token:
+        token = str(token).split()[1].encode("utf-8")
+        knoxAuth = TokenAuthentication()
+        user, auth_token = knoxAuth.authenticate_credentials(token)
+        request.user = user
+
+        # query user data from student db
+        user_id = request.user.id
+        print(request.user)
+        current_user = Student.objects.get(student_id=user_id)
+        serialized_current_user = StudentSerializer(current_user)
+        return Response(serialized_current_user.data, status=status.HTTP_200_OK)
+
+
+class RegisterAPI(generics.GenericAPIView):
+    serializer_class = RegisterSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response({
+            "user": UserSerializer(user, context=self.get_serializer_context()).data,
+            "token": AuthToken.objects.create(user)[1]
+        })
+
+
+class LoginAPI(KnoxLoginView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request, format=None):
+        serializer = AuthTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        login(request, user)
+        return super(LoginAPI, self).post(request, format=None)
