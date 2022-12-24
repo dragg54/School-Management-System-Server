@@ -17,6 +17,7 @@ from django.contrib import admin
 from django.urls import path, include
 from knox import views as knox_views
 
+import Courses.views
 import Student.views
 from Student.views import LoginAPI, RegisterAPI
 
@@ -30,5 +31,6 @@ urlpatterns = [
     path('register', RegisterAPI.as_view(), name='register'),
     path('api/auth/', include('knox.urls')),
     path("api/result/", include("Result.urls"), name="result"),
-    path("user", Student.views.get_current_user, name="current user")
+    path("user", Student.views.get_current_user, name="current user"),
+    path("course", Courses.views.add_course, name="add course")
 ]
