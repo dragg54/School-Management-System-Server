@@ -11,6 +11,7 @@ class Result(models.Model):
     test_score_obtained = models.CharField(max_length=3)
     exam_score_obtainable = models.CharField(max_length=3)
     exam_score_obtained = models.CharField(max_length=3)
+    grade = models.CharField(max_length=1, null=True)
 
     def __str__(self):
         student = Student.objects.get(id = self.student_id.id)
