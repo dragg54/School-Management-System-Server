@@ -36,8 +36,8 @@ def get_students(request):
     students = Student.objects.all()
     if students is None:
         return Response(status=status.HTTP_404_NOT_FOUND)
-    if role_is_authorized(request, "student"):
-        return Response("you are not allowed to make this request", status=status.HTTP_403_FORBIDDEN)
+    #if role_is_authorized(request, "student"):
+        #return Response("you are not allowed to make this request", status=status.HTTP_403_FORBIDDEN)
     else:
         print(request.user.is_superuser)
         serialized_student = StudentSerializer(students, many=True)
@@ -46,9 +46,9 @@ def get_students(request):
 
 @api_view(["GET"])
 def get_student(request, student_id):
-    student = Student.objects.get(pk=student_id)
+    student = Student.objects.filter(student_id=student_id)
     if student is not None:
-        serialized_student = StudentSerializer(student)
+        serialized_student = StudentSerializer(student, many=True)
         return Response(serialized_student.data, status=status.HTTP_200_OK)
     else:
         return Response(status=status.HTTP_404_NOT_FOUND)
